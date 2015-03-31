@@ -10,7 +10,7 @@ import (
 )
 
 var (
-	DbServer = "127.0.0.1:8082"
+	DbServer = "127.0.0.1:8081"
 	DataBase = "ansible_installer"
 	session  *r.Session
 )
