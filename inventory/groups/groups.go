@@ -1,7 +1,7 @@
 package main
 
 import (
-	_ "encoding/json"
+	"encoding/json"
 	"errors"
 	"fmt"
 	r "github.com/dancannon/gorethink"
@@ -27,12 +27,12 @@ func init() {
 	}
 	err = r.DbCreate(DataBase).Exec(session)
 	if err != nil {
-		log.Println(err)
+		return
 	}
 
 	_, err = r.Db(DataBase).TableCreate("groups").RunWrite(session)
 	if err != nil {
-		log.Println(err)
+		return
 	}
 }
 
@@ -40,6 +40,16 @@ type Group struct {
 	Name string      `gorethink:"name"`
 	ID   string      `gorethink:"id,omitempty"`
 	Data interface{} `gorethink:"data"`
+}
+
+type ListResult struct {
+	Result []DataStruct
+}
+
+type DataStruct struct {
+	Hosts    []string    `gorethink:"hosts"`
+	Vars     interface{} `gorethink:"vars,omitempty"`
+	Children []string    `gorethink:"children,omitempty"`
 }
 
 func (g Group) validateReq() (err error) {
@@ -66,6 +76,7 @@ func (g Group) getID() (id string, err error) {
 		err = errors.New("request failed. Group not found")
 		return id, err
 	}
+	// group names are uniqe, so I should be fine here
 	return IDs[0], nil
 }
 
@@ -109,6 +120,38 @@ func (g Group) Delete() (err error) {
 	return nil
 }
 
+func List() (err error) {
+	rows, err := r.Table("groups").Pluck("data").Run(session)
+	if err != nil {
+		return err
+	}
+	var result []interface{}
+	rows.All(&result)
+
+	if result == nil {
+		err = errors.New("{}")
+		return err
+	}
+
+	var out []interface{}
+	for _, elem := range result {
+		JSON, err := json.Marshal(elem)
+		if err != nil {
+			return err
+		}
+		// make the fields more accessible
+		jsonParsed, err := gabs.ParseJSON(JSON)
+		if err != nil {
+			return err
+		}
+		add := jsonParsed.Path("data")
+		out = append(out, add)
+	}
+	fmt.Println(out)
+
+	return nil
+}
+
 func main() {
 
 	var req Group
@@ -125,6 +168,8 @@ func main() {
 
 	var req2 Group
 	req2.Name = "testgroup2"
+
 	req2.Add()
-	req2.Delete()
+
+	List()
 }
