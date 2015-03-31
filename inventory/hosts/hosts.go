@@ -1,4 +1,4 @@
-package hosts
+package main
 
 import (
 	"encoding/json"
@@ -10,7 +10,7 @@ import (
 )
 
 var (
-	DbServer = "127.0.0.1:8081"
+	DbServer = "127.0.0.1:8082"
 	DataBase = "ansible_installer"
 	session  *r.Session
 )
@@ -112,7 +112,7 @@ func (h Host) Update(data interface{}) (err error) {
 func main() {
 	// ex. Update a Host by ID
 	var req2 Host
-	req2.Name = "asdsdd"
+	req2.Name = "localhost"
 	//req2.ID = "fcb8a618-92c8-4e53-a670-8b61b98a9c2f"
 	// create a data Object and provide the changes
 	Data := gabs.New()
